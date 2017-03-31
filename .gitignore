@@ -4,3 +4,9 @@
 *.gise
 *.xreport
 *.projectmgr
+*.xst
+*.prj
+*.vho
+*.ref
+Procesador/InstructionMemory.stx
+*.lso

@@ -26,3 +26,6 @@ Procesador/isim/pn_info
 *.dbg
 Procesador/isim/TB_Alu_isim_beh.exe.sim/tmp_save/_1
 Procesador/TB_Alu.vhd
+*.spl
+*.cmd_log
+*.sym

@@ -57,11 +57,11 @@ begin
 								result <= suma1 xor suma2;
 						when "000100" =>
 								result <= suma1 xnor suma2;
-						when  "000101"=>
+						when  "000101"=>--Sub
 								result<=suma1-suma2;
 						
 					
-				    	when others => --nop
+				    	when others => --nops
 				          result<= x"00000000";
 	
 				end case;	

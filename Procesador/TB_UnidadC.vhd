@@ -46,7 +46,25 @@ BEGIN
    stim_proc: process
    begin		
       -- hold reset state for 100 ns.
-      wait for 100 ns;	
+		op <= "10";
+		op3 <="000000";
+		wait for 20 ns;
+		
+		op <= "10";
+		op3 <="000001";
+		wait for 20 ns;
+		
+		op <= "10";
+		op3 <="000010";
+		wait for 20 ns;
+		
+		op <= "10";
+		op3 <="000011";
+		wait for 20 ns;
+		
+		op <= "10";
+		op3 <="000111";
+		wait for 20 ns;
 
       
       wait;

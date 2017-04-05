@@ -52,15 +52,12 @@ BEGIN
    -- Stimulus process
    stim_proc: process
    begin		
-      -- hold reset state for 100 ns.
+      
 		
       suma1 <= x"0000000F";
 		suma2 <= x"0000008F";
 	   alu_op <= "000000";--AND
 		wait for 20 ns;
-		
-		
-		
 		suma1 <= x"0000000F";
 		suma2 <= x"000000AF";
 		alu_op <= "000001";--OR
@@ -80,10 +77,6 @@ BEGIN
 		suma2 <= x"00000009";
 		alu_op <= "001000";--SUB
 		wait for 20 ns;
-
-      
-
-      -- insert stimulus here 
 
       wait;
    end process;

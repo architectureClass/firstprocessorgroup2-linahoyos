@@ -59,6 +59,10 @@ begin
 								result <= suma1 xnor suma2;
 						when  "000101"=>--Sub
 								result<=suma1-suma2;
+						when "000110"=>--Nand
+								result<=suma1 and not suma2;
+						when "000111"=>--nor
+								result<= suma1 or not suma2;
 						
 					
 				    	when others => --nops

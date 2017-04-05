@@ -1,0 +1,12 @@
+
+
+
+// Instantiate the module
+MUX instance_name (
+    .i(i), 
+    .imm32(imm32), 
+    .Crs2(Crs2), 
+    .Salida(Salida)
+    );
+
+

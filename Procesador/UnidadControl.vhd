@@ -17,32 +17,32 @@ begin
 		case(op) is
 		
 			when "10" =>
-				if(op3="000000") then--Add
+			case op3 is
+				when "000000" =>--Add
 					result <= "000000";
-				end if;
-				if(op3="000001") then--	And
+				
+				when "000001" =>--	And
 					result <= "000001";
-				end if;
-				if(op3="000100") then--	Sub
+			
+				when "000100" =>--	Sub
 					result <= "000101";
-				end if;
-				if(op3="000010") then--	OR
+			
+				when "000010" =>--	OR
 					result <= "000010";
-				end if;
 			
-				
-				if(op3="000011") then--	xor
+				when "000011" =>--	xor
 					result <= "000011";
-				end if;
-				if(op3="000111") then--	xnor
-					result <= "000100";
-				end if;
 				
-			
-			when others => result <= "111111";
+				
+				when "000111" => --	xnor
+					result <= "000100";
+				when others => result <= "111111";
+				end case;
+				
+				when others => result <= "111111";
 		end case;
 
 	end process;
-
+ salida<=result;
 end arq_UnidadControl;
 

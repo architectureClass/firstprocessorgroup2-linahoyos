@@ -2,7 +2,9 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
  
-
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--USE ieee.numeric_std.ALL;
  
 ENTITY TB_ProcesadorFinal IS
 END TB_ProcesadorFinal;
@@ -53,10 +55,10 @@ BEGIN
    stim_proc: process
    begin		
       -- hold reset state for 100 ns.
-      wait for 100 ns;	
-
+		rst<='1';
+      wait for 20 ns;	
+		rst<='0';
       
-
       -- insert stimulus here 
 
       wait;

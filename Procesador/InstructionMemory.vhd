@@ -5,7 +5,7 @@ use IEEE.std_logic_unsigned.all;
 use std.textio.all;
 
 entity InstructionMemory is
-    Port ( --rst : in  STD_LOGIC;
+    Port ( rst : in  STD_LOGIC;
            Direccion : in  STD_LOGIC_VECTOR (31 downto 0);
            Salida : out  STD_LOGIC_VECTOR (31 downto 0));
 end InstructionMemory;
@@ -33,14 +33,14 @@ signal instructions : rom_type := InitRomFromFile("testJMPL.data");
 
 	
 begin
-	--process(rst,Direccion)
-	--begin
-		--if rst='1' then
-			--instructions<=(others => "00000000000000000000000000000000");
-			--else
-				salida<= instructions(conv_integer(Direccion(5 downto 0)));
+	process(rst,Direccion)
+	 begin
+		 if rst='1' then
+			Salida<="00000000000000000000000000000000";
+		else
+			Salida<= instructions(conv_integer(Direccion(5 downto 0)));
 			
-		--end if;
-	--end process;
+		end if;
+	end process;
 end Behavioral;
 

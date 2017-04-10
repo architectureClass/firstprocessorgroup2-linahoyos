@@ -29,7 +29,7 @@ COMPONENT pc
 
 COMPONENT InstructionMemory
 	PORT(
-		--rst : IN std_logic;
+		rst : IN std_logic;
 		Direccion : IN std_logic_vector(31 downto 0);          
 		Salida : OUT std_logic_vector(31 downto 0)
 		);
@@ -97,7 +97,7 @@ Inst_pc: pc PORT MAP(
 		DataS =>Spc_IM 
 	);
 Inst_InstructionMemory: InstructionMemory PORT MAP(
-		--rst =>rst ,
+		rst =>rst ,
 		Direccion => Spc_IM,
 		Salida => SIM_RF
 	);
@@ -127,8 +127,8 @@ Inst_MUX: MUX PORT MAP(
 		Salida => SMux_Alu
 	);
 Inst_alu: alu PORT MAP(
-		suma1 =>SMux_Alu ,
-		suma2 =>SRF_Alu ,
+		suma1 =>SRF_Alu ,
+		suma2 =>SMux_Alu ,
 		alu_op =>salidaUC_Alu ,
 		salida_alu => Alu_RF
 	);

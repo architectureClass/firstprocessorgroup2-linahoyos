@@ -15,74 +15,83 @@ ARCHITECTURE behavior OF TB_DataMemory IS
  
     COMPONENT DataMemory
     PORT(
-         CRD : IN  std_logic_vector(31 downto 0);
+         cRD : IN  std_logic_vector(31 downto 0);
          AluResult : IN  std_logic_vector(31 downto 0);
-         WE : IN  std_logic;
-         rst : IN  std_logic;
-         DataResult : OUT  std_logic_vector(31 downto 0)
+         WRENMEM : IN  std_logic;
+         Reset : IN  std_logic;
+         DataMem : OUT  std_logic_vector(31 downto 0)
         );
     END COMPONENT;
     
 
    --Inputs
-   signal CRD : std_logic_vector(31 downto 0) := (others => '0');
+   signal cRD : std_logic_vector(31 downto 0) := (others => '0');
    signal AluResult : std_logic_vector(31 downto 0) := (others => '0');
-   signal WE : std_logic := '0';
-   signal rst : std_logic := '0';
+   signal WRENMEM : std_logic := '0';
+   signal Reset : std_logic := '0';
 
  	--Outputs
-   signal DataResult : std_logic_vector(31 downto 0);
-  
+   signal DataMem : std_logic_vector(31 downto 0);
+   -- No clocks detected in port list. Replace <clock> below with 
+   -- appropriate port name 
+ 
+ 
+ 
 BEGIN
  
 	-- Instantiate the Unit Under Test (UUT)
    uut: DataMemory PORT MAP (
-          CRD => CRD,
+          cRD => cRD,
           AluResult => AluResult,
-          WE => WE,
-          rst => rst,
-          DataResult => DataResult
+          WRENMEM => WRENMEM,
+          Reset => Reset,
+          DataMem => DataMem
         );
 
-   
  
 
    -- Stimulus process
    stim_proc: process
    begin		
-      -- hold reset state for 100 ns.
-		CRD <= x"00000000";
+     cRD <= x"00000000";
 		AluResult <= x"00000000";
-		WE <= '0';
-		rst <= '1';
-      wait for 100 ns;
-		rst <='0';
+		WRENMEM <= '0';
+		Reset <='1';
+      wait for 100 ns;	
+		Reset <='0';
 		
-		CRD <= x"00000001";
-		AluResult <= x"00000001";
-		WE <= '1';
-      wait for 20 ns;
-		CRD <= x"0000000C";
-		AluResult <= x"00000010";
-		WE <= '1';
+		cRD <= x"000F0A00";
+		AluResult <= x"00000005";
+		WRENMEM <= '1';
+      
 		wait for 20 ns;
-		CRD <= x"0000000D";
-		AluResult <= x"00000001";
-		WE <= '0';
-      wait for 20 ns;
-		CRD <= x"0000000A";
-		AluResult <= x"00000010";
-		WE <= '0';
+		
+		cRD <= x"000F0F0A";
+		AluResult <= x"0000000F";
+		WRENMEM <= '1';
+		
 		wait for 20 ns;
-		CRD <= x"0000000E";
-		AluResult <= x"00000001";
-		WE <= '0';
-      wait for 20 ns;
-		CRD <= x"0000000F";
-		AluResult <= x"00000010";
-		WE <= '0';
-      -- insert stimulus here 
+		
+		cRD <= x"0AF00F00";
+		AluResult <= x"00000005";
+		WRENMEM <= '0';
+		
+		wait for 20 ns;
+		cRD <= x"0000FAF0";
+		AluResult <= x"0000000F";
+		WRENMEM <= '0';
+		
+		wait for 20 ns;
+		cRD <= x"0AF00F00";
+		AluResult <= x"00000005";
+		WRENMEM <= '0';
+		
+		wait for 20 ns;
+
  
+
+      -- insert stimulus here 
+
       wait;
    end process;
 

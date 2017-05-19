@@ -15,33 +15,33 @@ ARCHITECTURE behavior OF TB_UnidadControl IS
  
     COMPONENT UnidadControl
     PORT(
-         op3 : IN  std_logic_vector(5 downto 0);
          op : IN  std_logic_vector(1 downto 0);
+         op3 : IN  std_logic_vector(5 downto 0);
          icc : IN  std_logic_vector(3 downto 0);
-         cond : IN  std_logic_vector(3 downto 0);
-         salida : OUT  std_logic_vector(5 downto 0);
-         R_WE : OUT  std_logic;
-         D_WE : OUT  std_logic;
-         rfdsc : OUT  std_logic;
-         pcsc : OUT  std_logic_vector(1 downto 0);
-         rfWsc : OUT  std_logic_vector(1 downto 0)
+         Cond : IN  std_logic_vector(3 downto 0);
+         AluOp : OUT  std_logic_vector(5 downto 0);
+         RFDEST : OUT  std_logic;
+         RFSC : OUT  std_logic_vector(1 downto 0);
+         WRENMEM : OUT  std_logic;
+         wre : OUT  std_logic;
+         PCSC : OUT  std_logic_vector(1 downto 0)
         );
     END COMPONENT;
     
 
    --Inputs
-   signal op3 : std_logic_vector(5 downto 0) := (others => '0');
    signal op : std_logic_vector(1 downto 0) := (others => '0');
+   signal op3 : std_logic_vector(5 downto 0) := (others => '0');
    signal icc : std_logic_vector(3 downto 0) := (others => '0');
-   signal cond : std_logic_vector(3 downto 0) := (others => '0');
+   signal Cond : std_logic_vector(3 downto 0) := (others => '0');
 
  	--Outputs
-   signal salida : std_logic_vector(5 downto 0);
-   signal R_WE : std_logic;
-   signal D_WE : std_logic;
-   signal rfdsc : std_logic;
-   signal pcsc : std_logic_vector(1 downto 0);
-   signal rfWsc : std_logic_vector(1 downto 0);
+   signal AluOp : std_logic_vector(5 downto 0);
+   signal RFDEST : std_logic;
+   signal RFSC : std_logic_vector(1 downto 0);
+   signal WRENMEM : std_logic;
+   signal wre : std_logic;
+   signal PCSC : std_logic_vector(1 downto 0);
    -- No clocks detected in port list. Replace <clock> below with 
    -- appropriate port name 
  
@@ -50,56 +50,61 @@ BEGIN
  
 	-- Instantiate the Unit Under Test (UUT)
    uut: UnidadControl PORT MAP (
-          op3 => op3,
           op => op,
+          op3 => op3,
           icc => icc,
-          cond => cond,
-          salida => salida,
-          R_WE => R_WE,
-          D_WE => D_WE,
-          rfdsc => rfdsc,
-          pcsc => pcsc,
-          rfWsc => rfWsc
+          Cond => Cond,
+          AluOp => AluOp,
+          RFDEST => RFDEST,
+          RFSC => RFSC,
+          WRENMEM => WRENMEM,
+          wre => wre,
+          PCSC => PCSC
         );
 
-   -- Clock process definitions
+
  
 
    -- Stimulus process
    stim_proc: process
    begin		
-      -- hold reset state for 100 ns.
-       wait for 100 ns;	
+      wait for 100 ns;	
 		op <= "10";
 		op3 <="000000";
-		
 		wait for 20 ns;
 		
 		op <= "10";
-		op3 <="000001";
+		op3 <="000001";--AND--ALUOp <= "000000";
 		wait for 20 ns;
 		
 		op <= "10";
-		op3 <="000010";
-		
+		op3 <="000010";--OR--ALUOp <= "000001";
 		wait for 20 ns;
 		
 		op <= "10";
-		op3 <="000011";
+		op3 <="000011";--XOR--ALUOp <= "000010";
 		wait for 20 ns;
 		
-		op <= "00"; --BA
+		op <= "10";
+		op3 <="000111";--XNOR--ALUOp <= "000011";
+		wait for 20 ns;
+      -- insert stimulus here 
+		
 		op3 <="010101";
-		icc <="1001";
-      cond <="1000";
+		op <= "00"; --- BE -- 
+		Cond <= "0001";
+		icc <= "0100";
 		wait for 20 ns;
 		
-		op <= "00";--BGE
-		op3 <="010100";
-		icc <="1000";
-      cond <="1011";
-		wait for 20 ns;	
-
+		op <= "00"; --- BG
+		Cond <= "1010";
+		icc <= "0000";
+		wait for 20 ns;
+		
+		op <= "00"; --- BGE
+		Cond <= "1011";
+		icc <= "1000";
+		wait for 20 ns;
       -- insert stimulus here 
 
       wait;

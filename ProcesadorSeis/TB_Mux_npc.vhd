@@ -15,38 +15,39 @@ ARCHITECTURE behavior OF TB_Mux_npc IS
  
     COMPONENT Mux_npc
     PORT(
-         Call : IN  std_logic_vector(31 downto 0);
-         Branch : IN  std_logic_vector(31 downto 0);
-         npc : IN  std_logic_vector(31 downto 0);
-         jump : IN  std_logic_vector(31 downto 0);
-         pcsc : IN  std_logic_vector(1 downto 0);
-         Salida_npc : OUT  std_logic_vector(31 downto 0)
+         CALL : IN  std_logic_vector(31 downto 0);
+         BRANCH : IN  std_logic_vector(31 downto 0);
+         nPC : IN  std_logic_vector(31 downto 0);
+         JUMP : IN  std_logic_vector(31 downto 0);
+         PCSC : IN  std_logic_vector(1 downto 0);
+         nPCOut : OUT  std_logic_vector(31 downto 0)
         );
     END COMPONENT;
     
 
    --Inputs
-   signal Call : std_logic_vector(31 downto 0) := (others => '0');
-   signal Branch : std_logic_vector(31 downto 0) := (others => '0');
-   signal npc : std_logic_vector(31 downto 0) := (others => '0');
-   signal jump : std_logic_vector(31 downto 0) := (others => '0');
-   signal pcsc : std_logic_vector(1 downto 0) := (others => '0');
+   signal CALL : std_logic_vector(31 downto 0) := (others => '0');
+   signal BRANCH : std_logic_vector(31 downto 0) := (others => '0');
+   signal nPC : std_logic_vector(31 downto 0) := (others => '0');
+   signal JUMP : std_logic_vector(31 downto 0) := (others => '0');
+   signal PCSC : std_logic_vector(1 downto 0) := (others => '0');
 
  	--Outputs
-   signal Salida_npc : std_logic_vector(31 downto 0);
+   signal nPCOut : std_logic_vector(31 downto 0);
    -- No clocks detected in port list. Replace <clock> below with 
    -- appropriate port name 
+ 
 
 BEGIN
  
 	-- Instantiate the Unit Under Test (UUT)
    uut: Mux_npc PORT MAP (
-          Call => Call,
-          Branch => Branch,
-          npc => npc,
-          jump => jump,
-          pcsc => pcsc,
-          Salida_npc => Salida_npc
+          CALL => CALL,
+          BRANCH => BRANCH,
+          nPC => nPC,
+          JUMP => JUMP,
+          PCSC => PCSC,
+          nPCOut => nPCOut
         );
 
  
@@ -54,35 +55,40 @@ BEGIN
    -- Stimulus process
    stim_proc: process
    begin		
-      -- hold reset state for 100 ns.
+    CALL <= x"00000000";
+   BRANCH <= x"00000000";
+   nPC <= x"00000000";
+   JUMP <= x"00000000";
+   PCSC <= "00";
       wait for 100 ns;	
-		Call <= x"00000101" ;
-		Branch <= x"00000100";
-		npc <= x"00000001";
-		jump <= x"00000010";
-		pcsc <= "00";
-		wait for 20 ns;	
-		Call <= x"00000010" ;
-		Branch <= x"00000101";
-		npc <= x"00000010";
-		jump <= x"00000110";
-		pcsc <= "01";
-		wait for 20 ns;	
-		Call <= x"00000011" ;
-		Branch <= x"00000111";
-		npc <= x"00001010";
-		jump <= x"00000100";
-		pcsc <= "10";
-		wait for 20 ns;	
-		Call <= x"00000010" ;
-		Branch<= x"00000011";
-		npc <= x"00011000";
-		jump <= x"00000110";
-		pcsc <= "11";
-      
-      
-
-      -- insert stimulus here 
+		
+	CALL <= x"0000F000";
+   BRANCH <= x"A0000000";
+   nPC <= x"0000E000";
+   JUMP <= x"00070000";
+   PCSC <= "00";
+		wait for 10 ns;
+		
+	CALL <= x"00004000";
+   BRANCH <= x"80000000";
+   nPC <= x"0000E000";
+   JUMP <= x"00070000";
+   PCSC <= "01";
+		wait for 10 ns;
+		
+	CALL <= x"00003000";
+   BRANCH <= x"70000000";
+   nPC <= x"00005000";
+   JUMP <= x"00090000";
+   PCSC <= "10";
+		wait for 10 ns;
+	
+	CALL <= x"00000020";
+   BRANCH <= x"00500000";
+   nPC <= x"00000000";
+   JUMP <= x"00000040";
+   PCSC <= "11";
+		wait for 10 ns;
 
       wait;
    end process;

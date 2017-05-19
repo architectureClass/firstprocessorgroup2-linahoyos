@@ -1,37 +1,40 @@
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-
+use ieee.std_logic_arith.all;
+use IEEE.NUMERIC_STD.ALL;
+use IEEE.STD_LOGIC_SIGNED.ALL;
 
 
 entity Mux_npc is
-    Port ( Call : in  STD_LOGIC_VECTOR (31 downto 0);
-           Branch : in  STD_LOGIC_VECTOR (31 downto 0);
-           npc : in  STD_LOGIC_VECTOR (31 downto 0);
-           jump : in  STD_LOGIC_VECTOR (31 downto 0);
-           pcsc : in  STD_LOGIC_VECTOR (1 downto 0);
-           Salida_npc : out  STD_LOGIC_VECTOR (31 downto 0));
+   Port ( CALL : in  STD_LOGIC_VECTOR (31 downto 0);
+           BRANCH : in  STD_LOGIC_VECTOR (31 downto 0);
+           nPC : in  STD_LOGIC_VECTOR (31 downto 0);
+           JUMP : in  STD_LOGIC_VECTOR (31 downto 0);
+           PCSC : in  STD_LOGIC_VECTOR (1 downto 0);
+           nPCOut : out  STD_LOGIC_VECTOR (31 downto 0));
 end Mux_npc;
 
 architecture Behavioral of Mux_npc is
-signal  Salida_aux : STD_LOGIC_VECTOR (31 downto 0) := x"00000000";
+signal nPCOut_Aux : std_logic_vector(31 downto 0) := x"00000000";
 begin
-process(Call,Branch,npc,jump,pcsc )
-begin
-   case(pcsc) is
-		when "00" =>
-			Salida_aux <= npc;
-		when "01" =>
-		   Salida_aux <= Call;
-		when "10" =>
-			Salida_aux <= Branch;
+process (CALL,BRANCH,nPC,JUMP,PCSC) begin
+	
+	case (PCSC) is 
+		when "10" => 
+		nPCOut <= CALL;
 		when "11" =>
-			Salida_aux <= jump;
-      when others =>
-			Salida_aux <= npc;
+		nPCOut <= BRANCH;
+		when "00" =>
+		nPCOut <= nPC;
+		when "01" =>
+		nPCOut <= JUMP;
+		when others => 
+			nPCOut <= nPC;
 	end case;
- end process;
-Salida_npc<=Salida_aux;
+	
+end process;
+--nPCOut <= nPCOut_Aux;
 
 end Behavioral;
 

@@ -1,250 +1,568 @@
-
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-
-
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity UnidadControl is
- Port ( op : in  STD_LOGIC_VECTOR (1 downto 0);
+    Port ( op : in  STD_LOGIC_VECTOR (1 downto 0);
            op3 : in  STD_LOGIC_VECTOR (5 downto 0);
-			  icc : in STD_LOGIC_VECTOR (3 downto 0);
-			  Cond : in STD_LOGIC_VECTOR (3 downto 0);
-           AluOp : out  STD_LOGIC_VECTOR (5 downto 0);
-			  RFDEST : out STD_LOGIC;
-			  RFSC : out STD_LOGIC_VECTOR(1 downto 0);
-			  WRENMEM : out STD_LOGIC;
-			  wre : out STD_LOGIC;
-			  PCSC : out STD_LOGIC_VECTOR(1 downto 0));
+           op2 : in  STD_LOGIC_VECTOR (2 downto 0);
+           cond : in  STD_LOGIC_VECTOR (3 downto 0);
+           icc : in  STD_LOGIC_VECTOR (3 downto 0);
+           HabilitadorMemoria : out  STD_LOGIC;
+           Rfdest : out  STD_LOGIC;
+           Rfsource : out  STD_LOGIC_VECTOR (1 downto 0);
+           Pcsource : out  STD_LOGIC_VECTOR (1 downto 0);
+           EscrituraMem : out  STD_LOGIC;
+           EscrituraRF : out  STD_LOGIC;
+           Aluop : out  STD_LOGIC_VECTOR (5 downto 0));
 end UnidadControl;
 
 architecture Behavioral of UnidadControl is
-signal result : std_logic_vector (5 downto 0) := "111111";
-signal WRENMEM_Aux: std_logic :='0';
-signal wre_Aux: std_logic :='0';
-signal PCSC_Aux: std_logic_vector (1 downto 0) :="00";
-signal RFDEST_Aux: std_logic :='0';
-signal RFSC_Aux: std_logic_vector (1 downto 0) :="00";
+
 begin
-process(op, op3, icc, cond) begin
-		case(op) is
-			
-			when "00" =>
-				WRENMEM_Aux <= '0';
-				wre_Aux <= '0';
-				PCSC_Aux <="00";-- NO HACE EL BRANCH
-				RFDEST_Aux <= '0';
-				if(op3(5 downto 3)="010") then
-				
-					case(cond) is
-						when "1000" =>--BA
-							PCSC_Aux <= "11";
-						when "0000" =>--BN
-							PCSC_Aux <= "00";
-						when "1001" =>--BNE
-							if(icc(2)='0') then
-								PCSC_Aux <= "11";
-							end if;
-						when "0001" =>--BE
-							if(icc(2)='1') then
-								PCSC_Aux <= "11";
-							end if;
-						when "1010" =>--BG
-							if((icc(2) or (icc(3) xor icc(1)))='0') then
-								PCSC_Aux <= "11";
-							end if;
-						when "0010" => --BLE
-							if((icc(2) or (icc(3) xor icc(1)))='1') then
-								PCSC_Aux <= "11";
-							end if;
-						when "1011" => --BGE
-							if((icc(3) xor icc(1))='0') then
-								PCSC_Aux <= "11";
-							end if;
-						when "0011" => --BL
-							if((icc(3) xor icc(1))='1') then
-								PCSC_Aux <= "11";
-							end if;
-						when "1100" => --BGU
-							if((icc(0) or icc(2))='0') then
-								PCSC_Aux <= "11";
-							end if;
-						when "0100" => --BLEU
-							if((icc(0) or icc(2))='1') then
-								PCSC_Aux <= "11";
-							end if;
-						when "1101" => --BCC
-							if(icc(0) ='0') then
-								PCSC_Aux <= "11";
-							end if;
-						when "0101" => --BCS
-							if(icc(0) ='1') then
-								PCSC_Aux <= "11";
-							end if;
-						when "1110"=> --BPOS
-							if(icc(3) ='0') then
-								PCSC_Aux <= "11";
-							end if;
-						when "0110"=> --BNEG
-							if(icc(3) ='1') then
-								PCSC_Aux <= "11";
-							end if;
-						when "1111"=> --BVC
-							if(icc(1) ='0') then
-								PCSC_Aux <= "11";
-							end if;
-						when "0111"=> --BVS
-							if(icc(1) ='1') then
-								PCSC_Aux <= "11";
-							end if;
-						when others => 
-							PCSC_Aux <= "00";
-					
-					
-									
+	process(op, op3, op2, cond, icc)
+begin
+	
+	if(op = "01") then -- call
+		Pcsource <= "01"; --salto disp 30
+		EscrituraRF <= '1';
+		Rfsource <= "10";
+		HabilitadorMemoria <= '0';
+		Rfdest <= '1';
+		EscrituraMem <= '0';
+		Aluop <= "111111";
+	else
+		if(op = "00") then
+			if(op2 = "010") then
+				case cond is
+					when "1000" => -- Branch Always
+						Pcsource <= "10"; -- salto disp 22
+						EscrituraRF <= '0';
+						HabilitadorMemoria <= '1';
+						Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "111111";
+					when "1001" => -- Branch on Not Equal
+						if(not(icc(2))='1') then -- not z
+							Pcsource <= "10"; -- salto disp 22
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						else
+							Pcsource <= "11"; -- salto pc
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						end if;
+					when "0001" => -- Branch on equal
+						if(icc(2) = '1') then -- z
+							Pcsource <= "10"; -- salto disp 22
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						else
+							Pcsource <= "11"; -- salto pc
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						end if;
+					when "1010" => -- Branch in Grester
+						if((not(icc(2) or (icc(3) xor icc(1)))) = '1') then --Not (z or (n xor v))
+							Pcsource <= "10"; -- salto disp 22
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						else
+							Pcsource <= "11"; -- salto pc
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						end if;
+					when "0010" => --Branch on Less on Equal
+						if((icc(2) or (icc(3) xor icc(1))) = '1') then
+							Pcsource <= "10"; -- salto disp 22
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						else
+							Pcsource <= "11"; -- salto pc
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						end if;
+					when "1011" => -- Branch on Greater or Equal
+						 if((not(icc(3) xor icc(1))) = '1') then
+							Pcsource <= "10"; -- salto disp 22
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						else
+							Pcsource <= "11"; -- salto pc
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						end if;
+					when "0011" => -- Branch on Less
+						if((icc(3) xor icc(1)) = '1') then
+							Pcsource <= "10"; -- salto disp 22
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						else
+							Pcsource <= "11"; -- salto pc
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						end if;
+					when "1100" => -- Branch on greater unsigned
+						if((not(icc(0) or icc(2)))= '1') then
+							Pcsource <= "10"; -- salto disp 22
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						else
+							Pcsource <= "10"; -- salto pc
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						end if;
+					when "0100" => -- Branch on Less Equal Unsigned
+						if((icc(0) or icc(2)) = '1') then
+							Pcsource <= "10"; -- salto disp 22
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						else
+							Pcsource <= "11"; -- salto pc
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						end if;
+					when "1101" => -- Branch on carroy clear
+						if((not(icc(0))) = '1') then
+							Pcsource <= "10"; -- salto disp 22
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						else
+							Pcsource <= "11"; -- salto pc
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						end if;
+					when "0101" => -- Branch on Carroy Set
+						if(icc(0) = '1') then
+							Pcsource <= "10"; -- salto disp 22
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						else
+							Pcsource <= "11"; -- salto pc
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						end if;
+					when "1110" => -- Branch on positive
+						if((not(icc(3))) = '1') then
+							Pcsource <= "10"; -- salto disp 22
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						else
+							Pcsource <= "11"; -- salto pc
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						end if;
+					when "0110" => -- Branch on negative
+						if(icc(3) = '1') then
+							Pcsource <= "10"; -- salto disp 22
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						else
+							Pcsource <= "11"; -- salto pc
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						end if;
+					when "1111" => -- Branch on overflow carry
+						if((not(icc(1))) = '1') then
+							Pcsource <= "10"; -- salto disp 22
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						else
+							Pcsource <= "11"; -- salto pc
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						end if;
+					when "0111" => -- Branch on overflow set
+						if(icc(1) = '1') then
+							Pcsource <= "10"; -- salto disp 22
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						else
+							Pcsource <= "11"; -- salto pc
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+						end if;
+					when others =>
+							Pcsource <= "00"; -- salto disp 22
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '0';
+							Rfsource <= "00"; -- No importa este valor ya que no se permite escritura en el Register File
+							Rfdest <= '0'; 
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
+				end case;
+			else
+				if(op2 = "100") then
+					Pcsource <= "11"; -- salto pc
+					EscrituraRF <= '0';
+					HabilitadorMemoria <= '0';
+					Rfsource <= "01"; -- Resultado operacion
+					Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+					EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+					Aluop <= "111111";
+				end if;
+			end if;
+		else
+			if(op = "10") then
+				case op3 is
+					when "000000" => 
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "000000"; --suma
+					when "000100" =>
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "000001"; --resta
+					when "000001" => 
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "000010"; --and
+					when "000010" => 
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "000011"; --or
+					when "000011" =>
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "000100"; --xor
+					when "000111" =>
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "000101"; --xnor
+					when "000101" =>
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "000110"; --nand
+					when "000110" => 
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "000111"; --nor
+					when "001000" => 
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "001000"; --suma con carry
+					when "010000" => 
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "001001"; --sumacc
+					when "011000" => 
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "001010"; --suma con carrycc
+					when "001100" =>
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "001011"; --resta con carry
+					when "010100" => 
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "001100"; --restacc
+					when "011100" => 
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "001101"; --resta con carrycc
+					when "010001" => 
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "001110"; --andcc
+					when "010101" =>
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "001111"; --nandcc
+					when "010010" => 
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "010000"; --orcc
+					when "010110" =>
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "010001"; --norcc
+					when "010011" => 
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "010010"; --xorcc
+					when "010111" => 
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "010011"; --xnorcc
+					when "100101" =>
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "010100"; --corrimiento izquierdo
+					when "100110" =>
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "010101"; --corrimiento derecho
+					--Especiales se dejaron igual
+					when "111100" => 
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "111100"; --save
+					when "111101" => 
+						Pcsource <= "11"; -- salto pc
+						EscrituraRF <= '1';
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "111101"; --restore
+					when "111000" =>
+						Pcsource <= "00"; -- salto direccion calculado
+						EscrituraRF <= '1'; -- Se guarda en el Register File el valor del PC
+						HabilitadorMemoria <= '0';
+						Rfsource <= "10"; -- Valor de PC
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "000000";
+					when others => 
+						Pcsource <= "11"; -- salto direccion calculado
+						EscrituraRF <= '0'; -- Se guarda en el Register File el valor del PC
+						HabilitadorMemoria <= '0';
+						Rfsource <= "01"; -- Resultado operacion
+						Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+						EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+						Aluop <= "111111";
+				end case;
+			else
+				if(op = "11") then
+					case op3 is
+						when "000100" => --store
+							Pcsource <= "11"; -- salto pc
+							EscrituraRF <= '0';
+							HabilitadorMemoria <= '1';
+							Rfsource <= "01"; -- No importa porque no se va a guardar en el Register File
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '1'; --  El dato es escrito en Memoria de Datos
+							Aluop <= "111111";
+						when "000000" => --load
+							Pcsource <= "11"; -- salto pc
+							EscrituraRF <= '1';
+							HabilitadorMemoria <= '1';
+							Rfsource <= "00"; -- Se debe guardar lo que se carga de la Memoria de Datos
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; --  El dato no es escrito en Memoria de Datos
+							Aluop <= "111111";
+						when others =>
+							Pcsource <= "11"; -- salto direccion calculado
+							EscrituraRF <= '0'; -- Se guarda en el Register File el valor del PC
+							HabilitadorMemoria <= '1';
+							Rfsource <= "01"; -- Resultado operacion
+							Rfdest <= '0'; -- No importa este Valor pues no se permitira escritura en el Register File
+							EscrituraMem <= '0'; -- El dato es leido de memoria pero no se toma en cuenta
+							Aluop <= "111111";
 					end case;
 				end if;
-			when "01" =>
-				WRENMEM_Aux <= '0';
-				wre_Aux <= '1';
-				PCSC_Aux <="10"; ---- HACE EL CALL
-				RFDEST_Aux <= '1';
-				RFSC_Aux <= "01"; ---- EN RF VA A ESCRIBIR LO QUE ES EL PC
-				
-				
-			
-			when "10" =>
-				WRENMEM_Aux <= '0';
-				wre_Aux <= '1';
-				PCSC_Aux <="00";
-				RFDEST_Aux <= '0';
-				RFSC_Aux <= "00"; -- EN EL RF SE ESCIBE EL VALOR DEL ALURESULT
-				if(op3="111000") then ---JMPL
-					result <= "011011";
-					PCSC_Aux <="01";
-					RFSC_Aux <= "01";
-				end if;	
-				if(op3="000001") then--AND
-					result <= "000000";
-				end if;
-				if(op3="000010") then--	OR
-					result <= "000001";
-				end if;
-				if(op3="000011") then--	XOR
-					result <= "000010";
-				end if;
-				if(op3="000111") then--	XNOR
-					result <= "000011";
-				end if;
-			
-				
-				if(op3="000000") then--	ADD
-					result <= "000111";
-				end if;
-				if(op3="000100") then--	SUB
-					result <= "001000";
-				end if;
-				if(op3="000101") then--	ANDN
-					result <= "001101";
-				end if;
-					if(op3="000110") then--	ORN
-					result <= "001110";
-				end if;
-				
-			
-				--instrucciones con Conditional Codes
-				if(op3="010100") then--SUBcc
-					result <= "001001";
-				end if;
-				if(op3="010000") then--ADDcc
-					result <= "001010";
-				end if;
-				if(op3="010001") then--ANDcc
-					result <= "010001";
-				end if;
-				if(op3="010010") then--ORcc
-					result <= "010010";
-				end if;
-				if(op3="010101") then--ANDNcc
-					result <= "010011";
-				end if;
-				if(op3="010110") then--ORNcc
-					result <= "010100";
-				end if;
-				if(op3="010011") then--XORcc
-					result <= "010101";
-				end if;
-				
-				if(op3="010111") then--XNORcc
-					result <= "010110";
-				end if;
-				
-				
-				--instrucciones con Carry
-				if(op3="001100") then--SUBX
-					result <= "001011";
-				end if;
-				if(op3="001000") then--ADDX
-					result <= "001100";
-				end if;
-				
-				--instrucciones con carry y Conditional Codes
-				if(op3="011000") then--ADDxcc
-					result <= "001111";
-				end if;
-				
-				if(op3="011100") then--SUBxcc
-					result <= "010000";
-				end if;
-				
-				--instrucciones con
-				
-				if(op3="100101") then--sll
-					result <= "010111";
-				end if;
-				
-				if(op3="100110") then--slr
-					result <= "011000";
-				end if; 
-				--- instrucciones save y restore
-				if(op3="111100") then--save
-						result <= "011001";
-					end if; 
-				if(op3="111101") then--restore
-						result <= "011010";
-				end if; 
-		
-			when "11" =>
-				WRENMEM_Aux <= '0';
-				wre_Aux <= '0';
-				PCSC_Aux <="00";
-				RFDEST_Aux <= '0';
-				RFSC_Aux <= "11"; 
-				if(op3="000000") then--load
-						result <= "011100";
-						WRENMEM_Aux <= '0';
-						wre_Aux <= '1';
-				end if; 
-				if(op3="000100") then--store
-						result <= "011101";
-						WRENMEM_Aux <= '1';
-						wre_Aux <= '0';
-				end if; 
-			
-			
-			
-			
-			when others => result <= "111111";
-		end case;
-	
-	
-	end process;
+			end if;
+		end if;
+	end if;
+end process;
 
-aluop <= result;
-WRENMEM <= WRENMEM_Aux;
-wre <= wre_Aux;
-PCSC <= PCSC_Aux;
-RFDEST <= RFDEST_Aux;
-RFSC <= RFSC_Aux;
 
 end Behavioral;
 

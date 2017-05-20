@@ -1,91 +1,47 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use ieee.std_logic_arith.all;
-use IEEE.NUMERIC_STD.ALL;
-use IEEE.STD_LOGIC_SIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity Alu is
-Port ( CRs1 : in  STD_LOGIC_VECTOR (31 downto 0);
-           CRs2 : in  STD_LOGIC_VECTOR (31 downto 0);
-			  C : in std_Logic;
-           ALUOp : in  STD_LOGIC_VECTOR (5 downto 0);
-           AluResult : out  STD_LOGIC_VECTOR (31 downto 0));
+    Port ( Op1 : in  STD_LOGIC_VECTOR (31 downto 0);
+           Op2 : in  STD_LOGIC_VECTOR (31 downto 0);
+           Selector : in  STD_LOGIC_VECTOR (5 downto 0);
+           Carry : in  STD_LOGIC;
+           Salida : out  STD_LOGIC_VECTOR (31 downto 0));
 end Alu;
 
 architecture Behavioral of Alu is
---signal i : std_logic := '0';
-signal result : std_logic_vector (31 downto 0) := x"00000000";
+
 begin
-process(CRs1, CRs2, ALUOP, C) begin
-		case(ALUOp) is
-			when "000000" =>--AND
-				result <= CRs1 and CRs2;
-			when "000001" =>--OR
-				result <= CRs1 or CRs2;
-			when "000010" => --XOR
-				result <= CRs1 xor CRs2;
-			when "000011" =>--XNOR
-				result <= CRs1 xnor CRs2;
-				
-			when "000111" => --ADD
-				result <= CRs1 + CRs2;
-			when "001000" =>--SUB
-				result <= CRs1-CRs2;
-			
-			
-			when "001001" => --SUBcc
-				result <= CRs1 -CRs2;
-			when "001010" => --ADDcc
-				result <= CRs1 + CRs2;
-			when "001011" => --SUBx
-				result <= CRs1 - CRs2 - C;
-			when "001100" => --ADDx
-				result <= CRs1 + CRs2 + C;
-			when "001101" => --ANDN
-				result <= CRs1 and not (CRs2);
-			when "001110" => --ORN
-				result <= CRs1 or not (CRs2);
-			when "001111" => --ADDxcc
-				result <= CRs1 + CRs2 + C;
-			when "010000" => --SUBxcc
-				result <= CRs1 - CRs2 - C;
-			when "010001" => --ANDcc
-				result <= CRs1 and CRs2;
-			when "010010" => --ORcc
-				result <= CRs1 or CRs2;
-			when "010011" => --ANDNcc
-				result <= CRs1 and not(CRs2);
-			when "010100" => --ORNcc
-				result <= CRs1 or not(CRs2);
-			when "010101" => --XORcc
-				result <= CRs1 xor CRs2;
-			when "010110" => --XNORcc
-				result <= CRs1 xnor CRs2;
-			when "010111" => --sll
-				result <= to_stdlogicvector(to_bitvector(CRs1) sll conv_integer(CRs2));
-			when "011000" => --srl
-				result <= to_stdlogicvector(to_bitvector(CRs1) sll conv_integer(CRs2));
-			
-			
-			when "011001" => --save
-				result <= CRs1 + CRs2;
-			
-			when "011010" => --restore
-				result <= CRs1 + CRs2;
-			
-			when "011011" => -- jmpl
-				result <= CRs1 + CRs2;
-				
-			when "011101" => --st
-				result <= CRs1 + CRs2;
-			when "011100" => --ld
-				result <= CRs1 + CRs2;
-			
-			when others => 
-			result <= x"00000000";
+	process(Op1, Op2, Selector, Carry)
+	begin
+		case Selector is
+			when "000000" => Salida <= Op1 + Op2;
+			when "000001" => Salida <= Op1 - Op2;
+			when "000010" => Salida <= Op1 and Op2;
+			when "000011" => Salida <= Op1 or Op2;
+			when "000100" => Salida <= Op1 xor Op2;
+			when "000101" => Salida <= Op1 xnor Op2;
+			when "000110" => Salida <= Op1 nand Op2;
+			when "000111" => Salida <= Op1 nor Op2;
+			when "001000" => Salida <= Op1 + Op2 + Carry;
+			when "001001" => Salida <= Op1 + Op2;
+			when "001010" => Salida <= Op1 + Op2 + Carry;
+			when "001011" => Salida <= Op1 - Op2 - Carry;
+			when "001100" => Salida <= Op1 - Op2;
+			when "001101" => Salida <= Op1 - Op2 - Carry;
+			when "001110" => Salida <= Op1 and Op2;
+			when "001111" => Salida <= Op1 nand Op2;
+			when "010000" => Salida <= Op1 or Op2;
+			when "010001" => Salida <= Op1 nor Op2;
+			when "010010" => Salida <= Op1 xor Op2;
+			when "010011" => Salida <= Op1 xnor Op2;
+			when "010100" => Salida <= to_stdlogicvector(to_bitvector(Op1) sll conv_integer(Op2));
+			when "010101" => Salida <= to_stdlogicvector(to_bitvector(Op1) srl conv_integer(Op2));
+			when others => Salida <= (others => '0');
 		end case;
 	end process;
-	AluResult <= result;
-
 end Behavioral;
+
 
